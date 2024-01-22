@@ -1,14 +1,14 @@
 # CPE-311
 
-## Introduction
+I'm John Louie V. Adornado, a 20-year-old pursuing the course of Computer Engineering at Technological Institute of the Philippines.
 
-Hello! I'm John Louie V. Adornado, a 20-year-old student currently pursuing a degree in Computer Engineering. I might not have a ton of skills yet, but I am enthusiastic and dedicated to the learning process.
-
-## About Me
+## About Me 💡
 
 - **Name:** John Louie V. Adornado
-- **Age:** 20 years old
-- **Major:** Computer Engineering
-- **University:** Technological Institute of the Philippines
-- **GitHub:** https://github.com/johnadornado
-- **Email:** qjladornado01@tip.edu.ph
+- **Age:** 20 🎂
+- **Gender:** Male 👨‍💻
+- **Interests:** 🎶 Music Enthusiast
+- **Major:** Computer Engineering 🤖
+- **University:** Technological Institute of the Philippines 🏫
+- **GitHub:** [johnadornado](https://github.com/johnadornado) 🐙
+- **Email:** qjladornado01@tip.edu.ph 📧
