@@ -9,6 +9,6 @@ I'm John Louie V. Adornado, a 20-year-old pursuing the course of Computer Engine
 - **Gender:** Male 👨‍💻
 - **Interests:** 🎶 Music Enthusiast
 - **Major:** Computer Engineering 🤖
-- **University:** Technological Institute of the Philippines 🏫
+- **School:** Technological Institute of the Philippines 🏫
 - **GitHub:** [johnadornado](https://github.com/johnadornado) 🐙
 - **Email:** qjladornado01@tip.edu.ph 📧
