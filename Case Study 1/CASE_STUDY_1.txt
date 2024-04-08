@@ -1,0 +1,198 @@
+import requests
+from tabulate import tabulate
+
+
+class Node(object):
+    def __init__(self, name):
+        self.name = name
+
+    def getName(self):
+        return self.name
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class Edge(object):
+    def __init__(self, src, dest):
+        self.src = src
+        self.dest = dest
+
+    def getSource(self):
+        return self.src
+
+    def getDestination(self):
+        return self.dest
+
+    def __str__(self):
+        return self.src.getName() + '->' + self.dest.getName()
+
+
+class Digraph(object):
+    def __init__(self):
+        self.edges = {}
+
+    def addNode(self, node):
+        if node in self.edges:
+            raise ValueError('Duplicate node')
+        else:
+            self.edges[node] = []
+
+    def addEdge(self, edge):
+        src = edge.getSource()
+        dest = edge.getDestination()
+        if not (src in self.edges and dest in self.edges):
+            raise ValueError('Node not in graph')
+        self.edges[src].append(dest)
+
+    def childrenOf(self, node):
+        return self.edges[node]
+
+    def getNode(self, name):
+        for n in self.edges:
+            if n.getName() == name:
+                return n
+        raise NameError(name)
+
+    def __str__(self):
+        result = ''
+        for src in self.edges:
+            for dest in self.edges[src]:
+                result = result + src.getName() + '->' + dest.getName() + '\n'
+        return result[:-1]
+
+
+def buildCityGraph(graphType, citynames, cityconnections):
+    g = graphType()
+
+    for name in citynames:
+        g.addNode(Node(name))
+
+    for connection in cityconnections:
+        city1, city2 = connection
+        g.addEdge(Edge(g.getNode(city1), g.getNode(city2)))
+
+    return g
+
+
+def printPath(path):
+    """Assumes path is a list of nodes"""
+    result = ''
+    for i in range(len(path)):
+        result = result + str(path[i])
+        if i != len(path) - 1:
+            result = result + '->'
+    return result
+
+
+def DFS(graph, start, end, path, shortest, toPrint=False):
+    path = path + [start]
+    if start == end:
+        return path
+    for node in graph.childrenOf(start):
+        if node not in path:  # avoid cycles
+            if shortest == None or len(path) < len(shortest):
+                newPath = DFS(graph, node, end, path, shortest,
+                              toPrint)
+                if newPath != None:
+                    shortest = newPath
+    return shortest
+
+
+def shortestPath(graph, start, end, toPrint=False):
+    """Assumes graph is a Digraph; start and end are nodes
+       Returns a shortest path from start to end in graph"""
+    return DFS(graph, start, end, [], None, toPrint)
+
+
+def weathering(weather):
+    table = []
+    results = []
+    headers = ['Location', 'Weather', 'Temperature', 'Wind Speed']
+    for i in weather:
+        weather_data = requests.get(
+            f"https://api.openweathermap.org/data/2.5/weather?q={i + ', PH'}&units=imperial&APPID={api_key}")
+
+        if weather_data.status_code == 200:
+            weather_json = weather_data.json()
+            if 'weather' in weather_json and 'main' in weather_json and 'wind' in weather_json:
+                weathers = weather_json['weather'][0]['description']
+                results.append(weathers)
+                temp = round(weather_json['main']['temp'])
+                speed = weather_json['wind']['speed']
+                table.append([(i + ", Bicol"), weathers, str(temp) + '°F', str(speed) + 'kph'])
+            else:
+                print("Weather data not available for", i)
+        else:
+            print("Error fetching weather data for", i)
+
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid", showindex="always"))
+    meow = {'clear sky': 0, 'few clouds': 0, 'scattered clouds': 0, 'broken clouds': 0,
+            'shower rain': 0, 'rain': 0, 'thunderstorm': 0, 'snow': 0, 'mist': 0}
+    for i in table:
+        meow[i[1]] += int(table[1].count(f'{i[1]}'))
+    maxx = max(meow, key=meow.get)
+    per = (meow[maxx]/len(weather)) * 100
+    print(f"\n#### Majority of the route is {maxx.capitalize()} with {per}% out of {len(weather)} ####")
+
+
+def testSP(source, destination):
+    city_connections = [('Naga', 'Pili'), ('Naga', 'Minalabac'), ('Minalabac', 'Bula'), ('Bula', 'Nabua'),
+                        ('Nabua', 'Balatan'), ('Nabua', 'City of iriga'), ('Nabua', 'Bato'), ('Nabua', 'Polangui'),
+                        ('Pili', 'Baao'), ('Ocampo', 'City of iriga'), ('Ocampo', 'Buhi'), ('Ocampo', 'Tigaon'),
+                        ('Tigaon', 'Sagnay'), ('Tigaon', 'Sagnay'), ('Sagnay', 'Tiwi'), ('Tiwi', 'Malilipot'),
+                        ('Malilipot', 'Tabaco city'), ('Legazpi city', 'Guinobatan'), ('Malilipot', 'Legazpi city'),
+                        ('Guinobatan', 'Ligao'), ('Ligao', 'Malama'), ('Ligao', 'Tabaco city'), ('Ligao', 'Polangui'),
+                        ('Pili', 'Ocampo'), ('Pili', 'Baao'), ('Baao', 'Nabua'), ('Pili', 'Bula'), ('Ocampo', 'Tigaon'),
+                        ('Buhi', 'Polangui'), ('Bato', 'Libon'), ('Libon', 'Polangui'), ('Libon', 'Pantao'),
+                        ('Pantao', 'Rawis'),
+                        ]
+    for connection in city_connections[:]:
+        reversed_connection = (connection[1], connection[0])
+        city_connections.append(reversed_connection)
+
+    g = buildCityGraph(Digraph, city_names, city_connections)
+    shortest_path = shortestPath(g, g.getNode(source), g.getNode(destination), toPrint=True)
+    if shortest_path is not None:
+        route = printPath(shortest_path)
+        print('Shortest path from', source, 'to', destination, 'is', route)
+        weathering(route.split('->'))
+    else:
+        print('There is no path from', source, 'to', destination)
+
+
+# Define city_names and api_key
+api_key = '30d4741c779ba94c470ca1f63045390a'
+city_names = ['Naga', 'Pili', 'Ocampo', 'Tigaon', 'Sagnay', 'Minalabac', 'Bula', 'Baao', 'Tiwi', 'Buhi',
+              'City of iriga', 'Nabua', 'Balatan', 'Bato', 'Libon', 'Pantao', 'Rawis', 'Polangui', 'Ligao',
+              'Malama', 'Tabaco city', 'Guinobatan', 'Legazpi city', 'Malilipot']
+
+names = [city_names[i:i + 8] for i in range(0, len(city_names), 8)]
+print(tabulate(names, tablefmt="fancy_grid"))
+print("A : City weather report\t B : Route Weather report")
+answer = input('Choice: ')
+if answer.upper() == 'A':
+    loc = input("Enter the City name: ").capitalize()
+    table = []
+    headerss = ['Location', 'Weather', 'Temperature', 'Wind Speed']
+    weather_data = requests.get(
+        f"https://api.openweathermap.org/data/2.5/weather?q={loc + ', PH'}&units=imperial&APPID={api_key}")
+    if weather_data.json()['cod'] == '404':
+        print("No City Found")
+    else:
+        weathers = weather_data.json()['weather'][0]['description']
+        temp = round(weather_data.json()['main']['temp'])
+        speed = weather_data.json()['wind']['speed']
+        table.append([(loc + ", Bicol"), weathers, str(temp) + '°F', str(speed) + 'kph'])
+    print(tabulate(table, headers=headerss, tablefmt="fancy_grid", showindex="always"))
+elif answer.upper() == 'B':
+    start = input("Starting point: ").capitalize()
+    if start not in city_names:
+        raise ValueError('City not in Locations')
+    end = input("Destination: ").capitalize()
+    if end not in city_names:
+        raise ValueError('City not in Locations end')
+    else:
+        testSP(start, end)
+else:
+    raise ValueError('Do not exist nibba')
